@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Shadow IT - E.E. Nelson Pizzoti</title>
+    <title>Simulador de Risco - E.E. Nelson Pizzoti</title>
     <style>
         :root {
             --bg-color: #f8f9fa; --text-color: #333;
@@ -11,11 +11,11 @@
             --gray: #6c757d; --dark: #1a1f29; --border: #e9ecef;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: #eaedf1; color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eaedf1; color: var(--text-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
         .dashboard { background: white; width: 100%; max-width: 950px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; box-sizing: border-box; }
         
         .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border); padding-bottom: 20px; margin-bottom: 20px; }
-        .header-title h1 { margin: 0; font-size: 24px; color: var(--dark); }
+        .header-title h1 { margin: 0; font-size: 22px; color: var(--dark); }
         .header-title p { margin: 5px 0 0; color: var(--gray); font-size: 14px; font-weight: 500; }
         
         .metrics { display: flex; gap: 30px; text-align: right; }
@@ -23,7 +23,7 @@
         .metric-title { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--gray); }
         .metric-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
         
-        /* ÁREA DO DIAGRAMA COM MALHA MAIS GROSSA E DESTACADA */
+        /* MALHA DE FUNDO */
         .diagram-container { 
             position: relative; width: 100%; height: 420px; 
             background-color: #ffffff;
@@ -34,22 +34,22 @@
             border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; 
         }
         
-        .node { position: absolute; padding: 8px 16px; background: white; border: 2px solid var(--gray); border-radius: 30px; font-weight: bold; font-size: 13px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .node { position: absolute; padding: 8px 16px; background: white; border: 2px solid var(--gray); border-radius: 30px; font-weight: bold; font-size: 13px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
         .node.compromised { background: #ffeeee; border-color: var(--red); color: var(--red); animation: pulse 1.5s infinite; }
         .node.protected { background: #eeffee; border-color: var(--green); color: var(--green); }
         
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
 
-        /* Posições */
+        /* Posições Espaçadas (20%, 50%, 80%) */
         #n-int { top: 30px; left: 50%; border-color: var(--blue); color: var(--blue); }
         #n-fw { top: 120px; left: 50%; border-color: #ffc107; color: #856404; } 
         #n-lan { top: 210px; left: 50%; border-color: var(--green); color: var(--green); }
-        #n-pca { top: 320px; left: 25%; }
+        #n-pca { top: 320px; left: 20%; }
         #n-pcb { top: 320px; left: 50%; }
-        #n-rogue { top: 320px; left: 75%; display: none; }
+        #n-rogue { top: 320px; left: 80%; display: none; }
 
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        line { stroke: #c1c8d0; stroke-width: 3; transition: 0.3s; } /* Linhas de rede mais grossas */
+        line { stroke: #c1c8d0; stroke-width: 3; transition: 0.3s; }
         .active-line { stroke: var(--green); }
         .danger-line { stroke: var(--red); animation: dashAttack 1s linear infinite; stroke-width: 4; stroke-dasharray: 8; }
         @keyframes dashAttack { to { stroke-dashoffset: -24; } }
@@ -57,15 +57,34 @@
         .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .panel-section { background: #f4f6f9; padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
         .panel-title { margin-top: 0; font-size: 14px; text-transform: uppercase; color: var(--dark); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
-        .control-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }
+        .control-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; font-weight: 500;}
         
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; flex-shrink: 0; margin-left: 10px;}
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input.attack:checked + .slider { background-color: var(--red); }
         input.defense:checked + .slider { background-color: var(--green); }
         input:checked + .slider:before { transform: translateX(22px); }
+
+        /* RESPONSIVIDADE PARA CELULARES (MOBILE) */
+        @media (max-width: 768px) {
+            .dashboard { padding: 15px; }
+            .header { flex-direction: column; align-items: center; text-align: center; gap: 15px; }
+            .metrics { width: 100%; justify-content: center; gap: 20px; }
+            .control-panel { grid-template-columns: 1fr; gap: 15px; } /* Painéis empilhados */
+            
+            /* Ajuste de Nós para não se sobreporem */
+            .node { 
+                font-size: 10px; 
+                padding: 6px; 
+                flex-direction: column; /* Empilha o ícone e o texto */
+                gap: 2px;
+                max-width: 80px; 
+                white-space: normal; 
+                line-height: 1.2;
+            }
+        }
     </style>
 </head>
 <body>
@@ -93,11 +112,11 @@
             <line x1="50%" y1="50px" x2="50%" y2="120px" class="active-line" />
             <line x1="50%" y1="140px" x2="50%" y2="210px" class="active-line" />
             
-            <line x1="50%" y1="230px" x2="25%" y2="320px" id="l-lan-pca" class="active-line" />
+            <line x1="50%" y1="230px" x2="20%" y2="320px" id="l-lan-pca" class="active-line" />
             <line x1="50%" y1="230px" x2="50%" y2="320px" id="l-lan-pcb" class="active-line" />
-            <line x1="50%" y1="230px" x2="75%" y2="320px" id="l-lan-rogue" style="display:none;" />
+            <line x1="50%" y1="230px" x2="80%" y2="320px" id="l-lan-rogue" style="display:none;" />
 
-            <path d="M 75% 320 Q 98% 180 52% 50" id="l-bypass" fill="none" stroke="transparent" stroke-width="4" />
+            <path d="M 80% 320 Q 98% 180 52% 50" id="l-bypass" fill="none" stroke="transparent" stroke-width="4" />
         </svg>
 
         <div class="node" id="n-int">🌐 INTERNET (WAN)</div>
@@ -148,12 +167,10 @@
         const defPortSec = document.getElementById('def-portsec').checked;
         const defGpo = document.getElementById('def-gpo').checked;
 
-        // Efetividade do ataque vs defesa
         const rogueEffective = atkRogue && !defPortSec;
         const usbEffective = atkUsb && !defGpo;
         const softEffective = atkSoft && !defGpo;
 
-        // Visual do Roteador Pirata
         document.getElementById('n-rogue').style.display = atkRogue ? 'flex' : 'none';
         const lanRogueLine = document.getElementById('l-lan-rogue');
         lanRogueLine.style.display = atkRogue ? 'block' : 'none';
@@ -170,39 +187,34 @@
             document.getElementById('n-rogue').className = 'node';
         }
 
-        // Estação A (Alvo do Pendrive)
         const pca = document.getElementById('n-pca');
         const pcaLine = document.getElementById('l-lan-pca');
         if (usbEffective) {
             pca.className = 'node compromised';
-            pca.innerHTML = '☠️ ADM A (Infectado)';
-            pcaLine.className = 'danger-line';
+            pca.innerHTML = '☠️ ADM A<br>(Infectado)';
         } else {
             pca.className = (defGpo && atkUsb) ? 'node protected' : 'node';
-            pca.innerHTML = (defGpo && atkUsb) ? '🛡️ ADM A (USB Bloqueado)' : '💻 ADM - ESTAÇÃO A';
+            pca.innerHTML = (defGpo && atkUsb) ? '🛡️ ADM A<br>(Bloqueado)' : '💻 ADM<br>ESTAÇÃO A';
             pcaLine.className = 'active-line';
         }
 
-        // Estação B (Alvo do Software Legado)
         const pcb = document.getElementById('n-pcb');
         const pcbLine = document.getElementById('l-lan-pcb');
         if (softEffective) {
             pcb.className = 'node compromised';
-            pcb.innerHTML = '☠️ ADM B (Exploit RCE)';
+            pcb.innerHTML = '☠️ ADM B<br>(Exploit)';
             pcbLine.className = 'danger-line';
         } else {
             pcb.className = (defGpo && atkSoft) ? 'node protected' : 'node';
-            pcb.innerHTML = (defGpo && atkSoft) ? '🛡️ ADM B (VBA Bloqueado)' : '💻 ADM - ESTAÇÃO B';
+            pcb.innerHTML = (defGpo && atkSoft) ? '🛡️ ADM B<br>(Bloqueado)' : '💻 ADM<br>ESTAÇÃO B';
             pcbLine.className = 'active-line';
         }
 
-        // Cálculo de Risco Acumulado
         let risk = 0;
         if (rogueEffective) risk += 40;
         if (usbEffective) risk += 30;
         if (softEffective) risk += 30;
 
-        // Atualização dos Status e Textos (INCLUINDO O GAME OVER)
         let statusNet = document.getElementById('status-net');
         let riskVal = document.getElementById('risk-val');
         let descText = document.getElementById('desc-text');
@@ -210,13 +222,11 @@
         riskVal.innerText = risk + '%';
 
         if (risk === 100) {
-            // O estado de COMPROMETIMENTO TOTAL que você solicitou
             riskVal.style.color = 'var(--red)';
             statusNet.innerText = 'COMPROMETIMENTO TOTAL';
             statusNet.style.color = 'var(--red)';
             descText.innerText = 'ALERTA: Perímetro bypassado e Endpoints infectados. Rede administrativa sob controle do atacante.';
         } else if (risk > 0) {
-            // Estado Parcialmente Vulnerável
             riskVal.style.color = 'var(--red)';
             statusNet.innerText = 'VULNERÁVEL';
             statusNet.style.color = 'var(--red)';
@@ -227,7 +237,6 @@
                 descText.innerText = 'ALERTA: Malware detectado em estação administrativa. Movimentação lateral iminente.';
             }
         } else {
-            // Estado Seguro / Mitigado
             riskVal.style.color = 'var(--green)';
             statusNet.innerText = 'ESTÁVEL';
             statusNet.style.color = 'var(--green)';
