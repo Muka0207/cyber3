@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Red Team vs Blue Team</title>
+    <title>Simulador de Shadow IT - E.E. Nelson Pizzoti</title>
     <style>
         :root {
             --bg-color: #f8f9fa; --text-color: #333;
@@ -12,7 +12,7 @@
         }
 
         body { font-family: 'Segoe UI', sans-serif; background: #eaedf1; color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .dashboard { background: white; width: 100%; max-width: 950px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; }
+        .dashboard { background: white; width: 100%; max-width: 950px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 30px; box-sizing: border-box; }
         
         .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border); padding-bottom: 20px; margin-bottom: 20px; }
         .header-title h1 { margin: 0; font-size: 24px; color: var(--dark); }
@@ -23,8 +23,16 @@
         .metric-title { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--gray); }
         .metric-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
         
-        /* Área do Diagrama */
-        .diagram-container { position: relative; width: 100%; height: 450px; background: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.02) 40px, rgba(0,0,0,0.02) 80px); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+        /* ÁREA DO DIAGRAMA COM MALHA MAIS GROSSA E DESTACADA */
+        .diagram-container { 
+            position: relative; width: 100%; height: 420px; 
+            background-color: #ffffff;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.08) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0,0,0,0.08) 2px, transparent 2px);
+            background-size: 40px 40px;
+            border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; 
+        }
         
         .node { position: absolute; padding: 8px 16px; background: white; border: 2px solid var(--gray); border-radius: 30px; font-weight: bold; font-size: 13px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .node.compromised { background: #ffeeee; border-color: var(--red); color: var(--red); animation: pulse 1.5s infinite; }
@@ -34,40 +42,30 @@
 
         /* Posições */
         #n-int { top: 30px; left: 50%; border-color: var(--blue); color: var(--blue); }
-        #n-fw { top: 130px; left: 50%; border-color: var(--green); color: var(--green); }
-        #n-lan { top: 230px; left: 50%; border-color: var(--gray); }
-        #n-pca { top: 330px; left: 25%; }
-        #n-server { top: 330px; left: 50%; border-color: var(--blue); }
-        #n-pcb { top: 330px; left: 75%; }
-        #n-rogue { top: 130px; left: 75%; display: none; }
+        #n-fw { top: 120px; left: 50%; border-color: #ffc107; color: #856404; } 
+        #n-lan { top: 210px; left: 50%; border-color: var(--green); color: var(--green); }
+        #n-pca { top: 320px; left: 25%; }
+        #n-pcb { top: 320px; left: 50%; }
+        #n-rogue { top: 320px; left: 75%; display: none; }
 
-        /* SVG */
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        line { stroke: var(--green); stroke-width: 2; stroke-dasharray: 6; transition: 0.3s; }
-        .danger-line { stroke: var(--red); animation: dashAttack 1s linear infinite; stroke-width: 3; }
-        .blocked-line { stroke: #ccc; stroke-dasharray: 2; animation: none; }
-        @keyframes dashAttack { to { stroke-dashoffset: -20; } }
+        line { stroke: #c1c8d0; stroke-width: 3; transition: 0.3s; } /* Linhas de rede mais grossas */
+        .active-line { stroke: var(--green); }
+        .danger-line { stroke: var(--red); animation: dashAttack 1s linear infinite; stroke-width: 4; stroke-dasharray: 8; }
+        @keyframes dashAttack { to { stroke-dashoffset: -24; } }
 
-        /* Controles (Painel de Comando) */
         .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .panel-section { background: #f4f6f9; padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
         .panel-title { margin-top: 0; font-size: 14px; text-transform: uppercase; color: var(--dark); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
-        .control-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .control-label { font-size: 14px; font-weight: 500; }
+        .control-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }
         
-        /* Switch CSS */
         .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        
         input.attack:checked + .slider { background-color: var(--red); }
         input.defense:checked + .slider { background-color: var(--green); }
         input:checked + .slider:before { transform: translateX(22px); }
-
-        .text-green { color: var(--green); }
-        .text-red { color: var(--red); }
-        .text-blue { color: var(--blue); }
     </style>
 </head>
 <body>
@@ -75,67 +73,66 @@
 <div class="dashboard">
     <div class="header">
         <div class="header-title">
-            <h1>Laboratório de Shadow IT & Mitigação</h1>
-            <p id="desc-text">Rede operando normalmente. Nenhuma ameaça detectada.</p>
+            <h1>Simulador de Risco: E.E. Nelson Pizzoti</h1>
+            <p id="desc-text">Rede monitorizada. Aguardando validação de ativos.</p>
         </div>
         <div class="metrics">
             <div class="metric">
                 <span class="metric-title">Nível de Risco</span>
-                <span class="metric-value text-green" id="risk-val">0%</span>
+                <span id="risk-val" style="color:var(--green); font-weight:bold;">0%</span>
             </div>
             <div class="metric">
-                <span class="metric-title">Status Global</span>
-                <span class="metric-value text-green" id="status-net">SEGURO</span>
+                <span class="metric-title">Integridade</span>
+                <span id="status-net" style="color:var(--green); font-weight:bold;">ESTÁVEL</span>
             </div>
         </div>
     </div>
 
     <div class="diagram-container">
-        <svg id="network-lines">
-            <line x1="50%" y1="50px" x2="50%" y2="130px" id="l-int-fw" />
-            <line x1="50%" y1="150px" x2="50%" y2="230px" id="l-fw-lan" />
-            <line x1="50%" y1="250px" x2="50%" y2="330px" id="l-lan-server" />
-            <line x1="50%" y1="250px" x2="25%" y2="330px" id="l-lan-pca" />
-            <line x1="50%" y1="250px" x2="75%" y2="330px" id="l-lan-pcb" />
+        <svg>
+            <line x1="50%" y1="50px" x2="50%" y2="120px" class="active-line" />
+            <line x1="50%" y1="140px" x2="50%" y2="210px" class="active-line" />
             
-            <line x1="50%" y1="50px" x2="75%" y2="130px" id="l-int-rogue" style="display:none;" />
-            <line x1="75%" y1="150px" x2="50%" y2="230px" id="l-rogue-lan" style="display:none;" />
+            <line x1="50%" y1="230px" x2="25%" y2="320px" id="l-lan-pca" class="active-line" />
+            <line x1="50%" y1="230px" x2="50%" y2="320px" id="l-lan-pcb" class="active-line" />
+            <line x1="50%" y1="230px" x2="75%" y2="320px" id="l-lan-rogue" style="display:none;" />
+
+            <path d="M 75% 320 Q 98% 180 52% 50" id="l-bypass" fill="none" stroke="transparent" stroke-width="4" />
         </svg>
 
-        <div class="node" id="n-int">🌐 INTERNET</div>
-        <div class="node" id="n-fw">🛡️ FIREWALL</div>
-        <div class="node" id="n-lan">🖧 REDE LOCAL</div>
-        <div class="node" id="n-pca">💻 ESTAÇÃO A</div>
-        <div class="node" id="n-server">🗄️ SERVIDOR ADM</div>
-        <div class="node" id="n-pcb">💻 ESTAÇÃO B</div>
-        <div class="node" id="n-rogue">📡 ROTEADOR PIRATA</div>
+        <div class="node" id="n-int">🌐 INTERNET (WAN)</div>
+        <div class="node" id="n-fw">🛡️ FORTIGATE / SEDUC</div>
+        <div class="node" id="n-lan">🖧 REDE LOCAL (LAN)</div>
+        <div class="node" id="n-pca">💻 ADM - ESTAÇÃO A</div>
+        <div class="node" id="n-pcb">💻 ADM - ESTAÇÃO B</div>
+        <div class="node" id="n-rogue">📡 ROGUE ROUTER</div>
     </div>
 
     <div class="control-panel">
         <div class="panel-section">
-            <h3 class="panel-title text-red">🔥 Vetores de Ataque (Red Team)</h3>
+            <h3 class="panel-title" style="color:var(--red);">🔥 Ações de Risco (Red Team)</h3>
             <div class="control-group">
-                <span class="control-label">1. Conectar Roteador Pirata</span>
+                <span>1. Roteador Pirata (NAT Bypass)</span>
                 <label class="switch"><input type="checkbox" class="attack" id="atk-rogue" onchange="updateSim()"><span class="slider"></span></label>
             </div>
             <div class="control-group">
-                <span class="control-label">2. Inserir Pendrive (USB Drop)</span>
+                <span>2. Inserir Pendrive (USB Drop)</span>
                 <label class="switch"><input type="checkbox" class="attack" id="atk-usb" onchange="updateSim()"><span class="slider"></span></label>
             </div>
             <div class="control-group">
-                <span class="control-label">3. Abrir Excel 2014 (Legado)</span>
+                <span>3. Executar Excel 2014 (VBA)</span>
                 <label class="switch"><input type="checkbox" class="attack" id="atk-soft" onchange="updateSim()"><span class="slider"></span></label>
             </div>
         </div>
 
         <div class="panel-section">
-            <h3 class="panel-title text-green">🛡️ Controles de Mitigação (Blue Team)</h3>
+            <h3 class="panel-title" style="color:var(--green);">🛡️ Mitigação (Blue Team)</h3>
             <div class="control-group">
-                <span class="control-label">4. Ativar Port Security (Switch)</span>
+                <span>4. Ativar Port Security (L2)</span>
                 <label class="switch"><input type="checkbox" class="defense" id="def-portsec" onchange="updateSim()"><span class="slider"></span></label>
             </div>
             <div class="control-group">
-                <span class="control-label">5. Aplicar AD GPO (Endpoints)</span>
+                <span>5. Aplicar AD GPO (Hardening)</span>
                 <label class="switch"><input type="checkbox" class="defense" id="def-gpo" onchange="updateSim()"><span class="slider"></span></label>
             </div>
         </div>
@@ -144,7 +141,6 @@
 
 <script>
     function updateSim() {
-        // Coleta de Status
         const atkRogue = document.getElementById('atk-rogue').checked;
         const atkUsb = document.getElementById('atk-usb').checked;
         const atkSoft = document.getElementById('atk-soft').checked;
@@ -152,105 +148,98 @@
         const defPortSec = document.getElementById('def-portsec').checked;
         const defGpo = document.getElementById('def-gpo').checked;
 
-        // Cálculos de Efetividade (O ataque passa pela defesa?)
+        // Efetividade do ataque vs defesa
         const rogueEffective = atkRogue && !defPortSec;
         const usbEffective = atkUsb && !defGpo;
         const softEffective = atkSoft && !defGpo;
 
-        let risk = 0;
-        if (rogueEffective) risk += 50;
-        if (usbEffective) risk += 25;
-        if (softEffective) risk += 25;
-
-        // Reset Visual Base
-        document.getElementById('n-pca').className = 'node';
-        document.getElementById('n-pca').innerHTML = '💻 ESTAÇÃO A';
-        document.getElementById('n-pcb').className = 'node';
-        document.getElementById('n-pcb').innerHTML = '💻 ESTAÇÃO B';
-        document.getElementById('n-server').className = 'node';
-        document.getElementById('l-lan-pca').className = '';
-        document.getElementById('l-lan-pcb').className = '';
-        document.getElementById('l-lan-server').className = '';
-        document.getElementById('l-fw-lan').className = '';
-
-        // --- LÓGICA DO ROTEADOR ---
-        if (atkRogue) {
-            document.getElementById('n-rogue').style.display = 'flex';
-            document.getElementById('l-int-rogue').style.display = 'block';
-            document.getElementById('l-rogue-lan').style.display = 'block';
-            
-            if (rogueEffective) {
-                document.getElementById('n-rogue').className = 'node compromised';
-                document.getElementById('l-int-rogue').className = 'danger-line';
-                document.getElementById('l-rogue-lan').className = 'danger-line';
-                document.getElementById('n-fw').style.opacity = '0.3'; // Firewall isolado
-            } else {
-                document.getElementById('n-rogue').className = 'node';
-                document.getElementById('l-int-rogue').className = 'blocked-line';
-                document.getElementById('l-rogue-lan').className = 'blocked-line';
-                document.getElementById('n-fw').style.opacity = '1';
-            }
-        } else {
-            document.getElementById('n-rogue').style.display = 'none';
-            document.getElementById('l-int-rogue').style.display = 'none';
-            document.getElementById('l-rogue-lan').style.display = 'none';
-            document.getElementById('n-fw').style.opacity = '1';
-        }
-
-        // --- LÓGICA DO PENDRIVE ---
-        if (atkUsb) {
-            if (usbEffective) {
-                document.getElementById('n-pca').className = 'node compromised';
-                document.getElementById('n-pca').innerHTML = '☠️ ESTAÇÃO A (RCE)';
-                document.getElementById('l-lan-pca').className = 'danger-line';
-            } else {
-                document.getElementById('n-pca').className = 'node protected';
-                document.getElementById('n-pca').innerHTML = '🛡️ BLOQUEADO (GPO)';
-            }
-        }
-
-        // --- LÓGICA DO SOFTWARE LEGADO ---
-        if (atkSoft) {
-            if (softEffective) {
-                document.getElementById('n-pcb').className = 'node compromised';
-                document.getElementById('n-pcb').innerHTML = '☠️ ESTAÇÃO B (Malware)';
-                document.getElementById('l-lan-pcb').className = 'danger-line';
-            } else {
-                document.getElementById('n-pcb').className = 'node protected';
-                document.getElementById('n-pcb').innerHTML = '🛡️ BLOQUEADO (GPO)';
-            }
-        }
-
-        // --- COMPROMETIMENTO DO SERVIDOR (Movimentação Lateral) ---
-        if (rogueEffective || usbEffective || softEffective) {
-            document.getElementById('n-server').className = 'node compromised';
-            document.getElementById('l-lan-server').className = 'danger-line';
-            document.getElementById('l-fw-lan').className = 'danger-line';
-        }
-
-        // --- ATUALIZAÇÃO DO PAINEL GERAL ---
-        document.getElementById('risk-val').innerText = risk + '%';
+        // Visual do Roteador Pirata
+        document.getElementById('n-rogue').style.display = atkRogue ? 'flex' : 'none';
+        const lanRogueLine = document.getElementById('l-lan-rogue');
+        lanRogueLine.style.display = atkRogue ? 'block' : 'none';
+        lanRogueLine.className = rogueEffective ? 'danger-line' : (atkRogue ? 'active-line' : '');
         
-        if (defPortSec && defGpo && (atkRogue || atkUsb || atkSoft)) {
-            document.getElementById('risk-val').className = 'metric-value text-blue';
-            document.getElementById('status-net').innerText = '100% MITIGADO';
-            document.getElementById('status-net').className = 'metric-value text-blue';
-            document.getElementById('desc-text').innerText = 'Ataques detectados, mas as defesas de infraestrutura (Camada 2) e endpoint (AD) neutralizaram as ameaças.';
-        } else if (risk === 0) {
-            document.getElementById('risk-val').className = 'metric-value text-green';
-            document.getElementById('status-net').innerText = 'SEGURO';
-            document.getElementById('status-net').className = 'metric-value text-green';
-            document.getElementById('desc-text').innerText = 'Rede operando normalmente. Nenhuma ameaça bem-sucedida.';
-        } else if (risk === 100) {
-            document.getElementById('risk-val').className = 'metric-value text-red';
-            document.getElementById('status-net').innerText = 'COMPROMETIMENTO TOTAL';
-            document.getElementById('status-net').className = 'metric-value text-red';
-            document.getElementById('desc-text').innerText = 'ALERTA: Perímetro bypassado e Endpoints infectados. Servidor ADM sob controle do atacante.';
+        const bypassPath = document.getElementById('l-bypass');
+        if (rogueEffective) {
+            bypassPath.setAttribute('stroke', 'var(--red)');
+            bypassPath.classList.add('danger-line');
+            document.getElementById('n-rogue').className = 'node compromised';
         } else {
-            document.getElementById('risk-val').className = 'metric-value text-red';
-            document.getElementById('status-net').innerText = 'VULNERÁVEL';
-            document.getElementById('status-net').className = 'metric-value text-red';
-            document.getElementById('desc-text').innerText = 'Brecha detectada. Risco ativo de movimentação lateral.';
+            bypassPath.setAttribute('stroke', 'transparent');
+            bypassPath.classList.remove('danger-line');
+            document.getElementById('n-rogue').className = 'node';
+        }
+
+        // Estação A (Alvo do Pendrive)
+        const pca = document.getElementById('n-pca');
+        const pcaLine = document.getElementById('l-lan-pca');
+        if (usbEffective) {
+            pca.className = 'node compromised';
+            pca.innerHTML = '☠️ ADM A (Infectado)';
+            pcaLine.className = 'danger-line';
+        } else {
+            pca.className = (defGpo && atkUsb) ? 'node protected' : 'node';
+            pca.innerHTML = (defGpo && atkUsb) ? '🛡️ ADM A (USB Bloqueado)' : '💻 ADM - ESTAÇÃO A';
+            pcaLine.className = 'active-line';
+        }
+
+        // Estação B (Alvo do Software Legado)
+        const pcb = document.getElementById('n-pcb');
+        const pcbLine = document.getElementById('l-lan-pcb');
+        if (softEffective) {
+            pcb.className = 'node compromised';
+            pcb.innerHTML = '☠️ ADM B (Exploit RCE)';
+            pcbLine.className = 'danger-line';
+        } else {
+            pcb.className = (defGpo && atkSoft) ? 'node protected' : 'node';
+            pcb.innerHTML = (defGpo && atkSoft) ? '🛡️ ADM B (VBA Bloqueado)' : '💻 ADM - ESTAÇÃO B';
+            pcbLine.className = 'active-line';
+        }
+
+        // Cálculo de Risco Acumulado
+        let risk = 0;
+        if (rogueEffective) risk += 40;
+        if (usbEffective) risk += 30;
+        if (softEffective) risk += 30;
+
+        // Atualização dos Status e Textos (INCLUINDO O GAME OVER)
+        let statusNet = document.getElementById('status-net');
+        let riskVal = document.getElementById('risk-val');
+        let descText = document.getElementById('desc-text');
+
+        riskVal.innerText = risk + '%';
+
+        if (risk === 100) {
+            // O estado de COMPROMETIMENTO TOTAL que você solicitou
+            riskVal.style.color = 'var(--red)';
+            statusNet.innerText = 'COMPROMETIMENTO TOTAL';
+            statusNet.style.color = 'var(--red)';
+            descText.innerText = 'ALERTA: Perímetro bypassado e Endpoints infectados. Rede administrativa sob controle do atacante.';
+        } else if (risk > 0) {
+            // Estado Parcialmente Vulnerável
+            riskVal.style.color = 'var(--red)';
+            statusNet.innerText = 'VULNERÁVEL';
+            statusNet.style.color = 'var(--red)';
+            
+            if (rogueEffective && !usbEffective && !softEffective) {
+                descText.innerText = 'ALERTA: Roteador pirata burlando autenticação SEDUC.';
+            } else {
+                descText.innerText = 'ALERTA: Malware detectado em estação administrativa. Movimentação lateral iminente.';
+            }
+        } else {
+            // Estado Seguro / Mitigado
+            riskVal.style.color = 'var(--green)';
+            statusNet.innerText = 'ESTÁVEL';
+            statusNet.style.color = 'var(--green)';
+            
+            if ((atkRogue || atkUsb || atkSoft) && (defPortSec || defGpo)) {
+                descText.innerText = 'Ataques detectados, mas mitigados com sucesso pelas políticas de defesa.';
+                statusNet.innerText = 'PROTEGIDO';
+                statusNet.style.color = 'var(--blue)';
+                riskVal.style.color = 'var(--blue)';
+            } else {
+                descText.innerText = 'Rede monitorizada. Aguardando validação de ativos.';
+            }
         }
     }
 </script>
